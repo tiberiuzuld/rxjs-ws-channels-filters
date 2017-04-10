@@ -1,20 +1,20 @@
 {
   "name": "rxjs-ws-channels-filters",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "RxJS websockets implementation with channels and filters",
   "main": "dist/index.js",
   "dependencies": {
-    "rxjs": "^5.3.0"
+    "rxjs": ">=5.3.0"
   },
   "devDependencies": {
-    "connect": "^3.6.0",
-    "eslint": "^3.19.0",
-    "gulp": "^3.9.1",
-    "gulp-clean": "^0.3.2",
-    "gulp-useref": "^3.1.2",
-    "http-proxy-middleware": "^0.17.4",
-    "serve-static": "^1.12.1",
-    "uws": "^0.14.1"
+    "connect": "3.6.0",
+    "eslint": "3.19.0",
+    "gulp": "3.9.1",
+    "gulp-clean": "0.3.2",
+    "gulp-useref": "3.1.2",
+    "http-proxy-middleware": "0.17.4",
+    "serve-static": "1.12.1",
+    "uws": "0.14.1"
   },
   "scripts": {
     "start-node": "node node/index.js",
