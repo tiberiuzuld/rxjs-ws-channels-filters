@@ -239,6 +239,8 @@ var rxSocket = {};
     return {
       url: userOptions.url,
       invalidUrl: userOptions.invalidUrl,
+      transformResponse: userOptions.transformResponse,
+      transformRequest: userOptions.transformRequest,
       channelJoinAction: userOptions.channelJoinAction || defaultOptions.channelJoinAction,
       channelLeaveAction: userOptions.channelLeaveAction || defaultOptions.channelLeaveAction,
       filterJoinAction: userOptions.filterJoinAction || defaultOptions.filterJoinAction,
@@ -268,11 +270,19 @@ var rxSocket = {};
           vm.retries = 0;
           vm.openedOnce = true;
           inputSubscription = vm.subject.subscribe(function (data) {
-            socket.send(JSON.stringify(data));
+            var message = data;
+            if (vm.options.transformRequest) {
+              message = vm.options.transformRequest(JSON.parse(JSON.stringify(message)));
+            }
+            socket.send(JSON.stringify(message));
           });
         };
-        socket.onmessage = function (message) {
-          observer.next(JSON.parse(message.data));
+        socket.onmessage = function (response) {
+          var message = JSON.parse(response.data);
+          if (vm.options.transformResponse) {
+            message = vm.options.transformResponse(message);
+          }
+          observer.next(message);
         };
         socket.onerror = function (error) {
           console.error(error);
