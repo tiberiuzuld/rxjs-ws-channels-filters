@@ -10,6 +10,7 @@ wss.on('connection', function (ws) {
     var m = JSON.parse(message);
     ws.send(JSON.stringify({
       channel: m.channel,
+      filter: m.filters && m.filters[0] ? m.filters[0].filter : undefined,
       data: {
         value: 3
       }
