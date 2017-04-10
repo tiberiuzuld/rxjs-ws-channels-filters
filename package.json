@@ -1,6 +1,6 @@
 {
   "name": "rxjs-ws-channels-filters",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "RxJS websockets implementation with channels and filters",
   "main": "dist/index.js",
   "dependencies": {
@@ -10,6 +10,8 @@
     "connect": "^3.6.0",
     "eslint": "^3.19.0",
     "gulp": "^3.9.1",
+    "gulp-clean": "^0.3.2",
+    "gulp-useref": "^3.1.2",
     "http-proxy-middleware": "^0.17.4",
     "serve-static": "^1.12.1",
     "uws": "^0.14.1"
@@ -18,8 +20,12 @@
     "start-node": "node node/index.js",
     "start-browser": "gulp serve",
     "start": "gulp serve | node node/index.js",
-    "test": "test"
+    "test": "test",
+    "build": "gulp build"
   },
+  "files": [
+    "dist/*"
+  ],
   "author": "Tiberiu Zuld",
   "repository": "https://github.com/tiberiuzuld/rxjs-ws-channels-filters.git",
   "license": "MIT"
