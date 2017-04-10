@@ -10,6 +10,19 @@
           resolve(10);
         }, 1000);
       });
+    },
+    transformResponse: function (message) {
+
+      return message;
+    },
+    transformRequest: function (message) {
+      if (message.filters && message.filters.length) {
+        var i = message.filters.length - 1;
+        for (; i > -1; i--) {
+          message.filters[i].type = message.channel;
+        }
+      }
+      return message;
     }
   };
 
