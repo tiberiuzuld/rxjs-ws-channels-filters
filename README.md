@@ -5,9 +5,13 @@ RxJS implementation of websockets with channels and filters
 
 ```javascript
 
-  var options = {
+   var options = {
     url: 'localhost:3000/api',
     invalidUrl: function (e) {
+      // optional option if close event code is >= 1006 https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+      // this function will be called expecting a promise
+      // in the resolve of the promise the websocket connection will try again to connect with the url from the options
+      // in the reject of the promise the websocket observer will complete
       return new Promise(function (resolve, reject) {
         setTimeout(function () {
           options.url = 'localhost:3000/api';
@@ -16,10 +20,11 @@ RxJS implementation of websockets with channels and filters
       });
     },
     transformResponse: function (message) {
-
+      // transform the response from server
       return message;
     },
     transformRequest: function (message) {
+      // transform the request sent to server
       if (message.filters && message.filters.length) {
         var i = message.filters.length - 1;
         for (; i > -1; i--) {
@@ -27,6 +32,24 @@ RxJS implementation of websockets with channels and filters
         }
       }
       return message;
+    },
+    channelsMatch: function channelsMatch(source, target) {
+      // default function to find matching channels used for sending messages to the correct channel
+      // and to not have duplicate channels
+      // optional option, arguments ['existing channel', 'message channel']
+      return source === target;
+    },
+    filtersMatch: function filtersMatch(source, target) {
+      // default function to find matching filters used for sending messages to the correct filter
+      // and to not have duplicate filters on the same channel
+      // optional option, arguments ['existing filter object', 'message filter object']
+      if (target) {
+        for (var p in source) {
+          if (source[p] !== target[p]) {
+            return false;
+          }
+        }
+      }
     }
   };
 
@@ -60,6 +83,6 @@ RxJS implementation of websockets with channels and filters
 
 ### TODO
  * add ability to send user messages to server on a channel and filter
- * add option for user custom filtering of channel and filters
  * make a separate repo with a server side node implementation
+ * make better documentation
  
