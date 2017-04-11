@@ -47,6 +47,9 @@ var rxSocket = {};
       subs: {}
     };
 
+    vm.channelsMatch = vm.connection.options.channelsMatch || channelsMatch;
+    vm.filtersMatch = vm.connection.options.filtersMatch || filtersMatch;
+
     function init() {
       if (!vm.channels.observable) {
         vm.channels.observable = new Rx.Observable.create(function (observer) {
@@ -79,7 +82,9 @@ var rxSocket = {};
 
     function subscribe(channel, responseHandle) {
       var channelSub = initChannel(channel);
-      return channelSub.observable.subscribe(responseHandle);
+      var subscriber = channelSub.observable.subscribe(responseHandle);
+      subscriber.send = createChannelSenderFunction(channel);
+      return subscriber;
     }
 
     function initChannel(channel) {
@@ -111,8 +116,14 @@ var rxSocket = {};
       }).share();
     }
 
+    function channelsMatch(source, target) {
+      return source === target;
+    }
+
     function subscribeFilter(channel, filter, responseHandle) {
-      return initFilter(channel, filter).observable.subscribe(responseHandle);
+      var subscriber = initFilter(channel, filter).observable.subscribe(responseHandle);
+      subscriber.send = createChannelSenderFunction(channel, filter);
+      return subscriber;
     }
 
     function initFilter(channel, filter) {
@@ -130,19 +141,20 @@ var rxSocket = {};
     function findExistingFilter(channelFilters, filter) {
       var i = 0, l = channelFilters.length;
       for (; i < l; i++) {
-        if (matchFilters(channelFilters[i].filter, filter)) {
+        if (vm.filtersMatch(channelFilters[i].filter, filter)) {
           return channelFilters[i];
         }
       }
     }
 
-    function matchFilters(source, target) {
+    function filtersMatch(source, target) {
       if (target) {
         for (var p in source) {
           if (source[p] !== target[p]) {
             return false;
           }
         }
+        return true;
       }
     }
 
@@ -202,14 +214,25 @@ var rxSocket = {};
 
     function createChannelFilter(channel) {
       return function (data) {
-        return data.channel === channel;
+        return vm.channelsMatch(channel, data.channel);
       };
     }
 
     function createFilterFunction(filter) {
       return function (data) {
-        return matchFilters(filter, data.filter);
+        return vm.filtersMatch(filter, data.filter);
       };
+    }
+
+    function createChannelSenderFunction(channel, filter) {
+      return function (message) {
+        vm.connection.subject.next({
+          action: vm.connection.options.notifyAction,
+          channel: channel,
+          filter: filter,
+          data: message
+        });
+      }
     }
 
     return {
@@ -226,25 +249,23 @@ var rxSocket = {};
     channelJoinAction: 'JOIN',
     channelLeaveAction: 'LEAVE',
     filterJoinAction: 'ADD',
-    filterLeaveAction: 'REMOVE'
-  };
-
-  var CHANGE_TYPES = {
-    CREATED: 1,
-    MODIFIED: 2,
-    DELETED: 3
+    filterLeaveAction: 'REMOVE',
+    notifyAction: 'NOTIFY'
   };
 
   function addDefaultOptions(userOptions) {
     return {
       url: userOptions.url,
       invalidUrl: userOptions.invalidUrl,
+      channelsMatch: userOptions.channelsMatch,
+      filtersMatch: userOptions.filtersMatch,
       transformResponse: userOptions.transformResponse,
       transformRequest: userOptions.transformRequest,
       channelJoinAction: userOptions.channelJoinAction || defaultOptions.channelJoinAction,
       channelLeaveAction: userOptions.channelLeaveAction || defaultOptions.channelLeaveAction,
       filterJoinAction: userOptions.filterJoinAction || defaultOptions.filterJoinAction,
-      filterLeaveAction: userOptions.filterLeaveAction || defaultOptions.filterLeaveAction
+      filterLeaveAction: userOptions.filterLeaveAction || defaultOptions.filterLeaveAction,
+      notifyAction: userOptions.notifyAction || defaultOptions.notifyAction
     }
   }
 
