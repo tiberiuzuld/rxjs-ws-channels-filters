@@ -93,4 +93,5 @@ RxJS implementation of websockets with channels and filters
 ### TODO
  * make a separate repo with a server side node implementation
  * make better documentation
+ * make demo
  
