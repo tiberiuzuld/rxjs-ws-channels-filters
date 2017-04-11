@@ -49,8 +49,15 @@ RxJS implementation of websockets with channels and filters
             return false;
           }
         }
+        return true;
       }
-    }
+    },
+    // default options for actions
+    channelJoinAction: 'JOIN',
+    channelLeaveAction: 'LEAVE',
+    filterJoinAction: 'ADD',
+    filterLeaveAction: 'REMOVE',
+    notifyAction: 'NOTIFY'
   };
 
   var socket = rxSocket.create(options);
@@ -71,6 +78,8 @@ RxJS implementation of websockets with channels and filters
   var filterSub = socket.channels.subscribeFilter('three', {id: 3}, function (message) {
     console.log('filter', message);
   });
+  
+  filterSub.send('this is a message, from filter'); //send messages to server on this channel and filter
 
   setTimeout(function () {
     filterSub.unsubscribe();
@@ -82,7 +91,6 @@ RxJS implementation of websockets with channels and filters
 ```
 
 ### TODO
- * add ability to send user messages to server on a channel and filter
  * make a separate repo with a server side node implementation
  * make better documentation
  

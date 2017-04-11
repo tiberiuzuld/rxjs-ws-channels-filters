@@ -45,9 +45,19 @@
             return false;
           }
         }
+        return true;
       }
-    }
+    },
+    // default options for actions
+    channelJoinAction: 'JOIN',
+    channelLeaveAction: 'LEAVE',
+    filterJoinAction: 'ADD',
+    filterLeaveAction: 'REMOVE',
+    notifyAction: 'NOTIFY'
   };
+
+  options.channelsMatch = undefined;
+  options.filtersMatch = undefined;
 
   var socket = rxSocket.create(options);
   console.log(socket);
@@ -68,10 +78,12 @@
     console.log('filter', message);
   });
 
-  setTimeout(function () {
-    filterSub.unsubscribe();
-    var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-      console.log('filter', message);
-    });
-  }, 5000);
+  filterSub.send('this is a message, from filter');
+  //
+  // setTimeout(function () {
+  //   filterSub.unsubscribe();
+  //   var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+  //     console.log('filter', message);
+  //   });
+  // }, 5000);
 })();

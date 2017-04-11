@@ -82,7 +82,9 @@ var rxSocket = {};
 
     function subscribe(channel, responseHandle) {
       var channelSub = initChannel(channel);
-      return channelSub.observable.subscribe(responseHandle);
+      var subscriber = channelSub.observable.subscribe(responseHandle);
+      subscriber.send = createChannelSenderFunction(channel);
+      return subscriber;
     }
 
     function initChannel(channel) {
@@ -119,7 +121,9 @@ var rxSocket = {};
     }
 
     function subscribeFilter(channel, filter, responseHandle) {
-      return initFilter(channel, filter).observable.subscribe(responseHandle);
+      var subscriber = initFilter(channel, filter).observable.subscribe(responseHandle);
+      subscriber.send = createChannelSenderFunction(channel, filter);
+      return subscriber;
     }
 
     function initFilter(channel, filter) {
@@ -150,6 +154,7 @@ var rxSocket = {};
             return false;
           }
         }
+        return true;
       }
     }
 
@@ -219,6 +224,17 @@ var rxSocket = {};
       };
     }
 
+    function createChannelSenderFunction(channel, filter) {
+      return function (message) {
+        vm.connection.subject.next({
+          action: vm.connection.options.notifyAction,
+          channel: channel,
+          filter: filter,
+          data: message
+        });
+      }
+    }
+
     return {
       subscribe: subscribe,
       subscribeFilter: subscribeFilter
@@ -233,7 +249,8 @@ var rxSocket = {};
     channelJoinAction: 'JOIN',
     channelLeaveAction: 'LEAVE',
     filterJoinAction: 'ADD',
-    filterLeaveAction: 'REMOVE'
+    filterLeaveAction: 'REMOVE',
+    notifyAction: 'NOTIFY'
   };
 
   function addDefaultOptions(userOptions) {
@@ -247,7 +264,8 @@ var rxSocket = {};
       channelJoinAction: userOptions.channelJoinAction || defaultOptions.channelJoinAction,
       channelLeaveAction: userOptions.channelLeaveAction || defaultOptions.channelLeaveAction,
       filterJoinAction: userOptions.filterJoinAction || defaultOptions.filterJoinAction,
-      filterLeaveAction: userOptions.filterLeaveAction || defaultOptions.filterLeaveAction
+      filterLeaveAction: userOptions.filterLeaveAction || defaultOptions.filterLeaveAction,
+      notifyAction: userOptions.notifyAction || defaultOptions.notifyAction
     }
   }
 
