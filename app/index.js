@@ -78,12 +78,16 @@
     console.log('filter', message);
   });
 
+  var filterSub2 = socket.channels.subscribeFilter('three', {id: 3}, function (message) {
+    console.log('filter', message);
+  });
+
   filterSub.send('this is a message, from filter');
-  //
-  // setTimeout(function () {
-  //   filterSub.unsubscribe();
-  //   var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-  //     console.log('filter', message);
-  //   });
-  // }, 5000);
+
+  setTimeout(function () {
+    filterSub.unsubscribe();
+    // var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+    //   console.log('filter', message);
+    // });
+  }, 5000);
 })();
