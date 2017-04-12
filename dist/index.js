@@ -276,6 +276,7 @@ var rxSocket = {};
       channelsMatch: userOptions.channelsMatch,
       filtersMatch: userOptions.filtersMatch,
       transformResponse: userOptions.transformResponse,
+      handleResponseMessage: userOptions.handleResponseMessage,
       transformRequest: userOptions.transformRequest,
       channelJoinAction: userOptions.channelJoinAction || defaultOptions.channelJoinAction,
       channelLeaveAction: userOptions.channelLeaveAction || defaultOptions.channelLeaveAction,
@@ -319,7 +320,11 @@ var rxSocket = {};
           if (vm.options.transformResponse) {
             message = vm.options.transformResponse(message);
           }
-          observer.next(message);
+          if (vm.options.handleResponseMessage) {
+            vm.options.handleResponseMessage(message, observer);
+          } else {
+            observer.next(message);
+          }
         };
         socket.onerror = function (error) {
           console.error(error);
@@ -348,7 +353,13 @@ var rxSocket = {};
           socket.close();
         };
       }).retryWhen(function (errors) {
-        return errors.delay(Math.min(vm.retries++ * 8, 60) * 1000);
+        return Rx.Observable
+                 .range(0, 100000)
+                 .zip(errors, function (i) {
+                   return i;
+                 }).flatMap(function (i) {
+            return Rx.Observable.timer(Math.min(i * 8, 60) * 1000);
+          });
       }).share();
     }
 
