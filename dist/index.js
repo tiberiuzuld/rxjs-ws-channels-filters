@@ -357,9 +357,11 @@ var rxSocket = {};
                  .range(0, 100000)
                  .zip(errors, function (i) {
                    return i;
-                 }).flatMap(function (i) {
-            return Rx.Observable.timer(Math.min(i * 8, 60) * 1000);
-          });
+                 })
+                 .flatMap(function (i) {
+                   vm.retries = i;
+                   return Rx.Observable.timer(Math.min(i * 8, 60) * 1000);
+                 });
       }).share();
     }
 
