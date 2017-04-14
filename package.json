@@ -1,6 +1,6 @@
 {
   "name": "rxjs-ws-channels-filters",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "RxJS websockets implementation with channels and filters",
   "main": "dist/index.js",
   "dependencies": {
