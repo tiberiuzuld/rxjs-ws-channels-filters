@@ -1,4 +1,9 @@
 # rxjs-ws-channels-filters
+[![npm version](https://badge.fury.io/js/rxjs-ws-channels-filters.svg)](https://badge.fury.io/js/rxjs-ws-channels-filters)
+[![dependencies Status](https://david-dm.org/tiberiuzuld/rxjs-ws-channels-filters/status.svg)](https://david-dm.org/tiberiuzuld/rxjs-ws-channels-filters)
+[![devDependencies Status](https://david-dm.org/tiberiuzuld/rxjs-ws-channels-filters/dev-status.svg)](https://david-dm.org/tiberiuzuld/rxjs-ws-channels-filters?type=dev)
+[![downloads](https://img.shields.io/npm/dm/rxjs-ws-channels-filters.svg)](https://www.npmjs.com/package/rxjs-ws-channels-filters)
+
 RxJS implementation of websockets with channels and filters
 
 #### Work in progress
