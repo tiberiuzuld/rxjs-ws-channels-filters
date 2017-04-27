@@ -78,31 +78,32 @@
     console.log('filter', message);
   });
 
-  var filterSub3 = socket.channels.subscribeFilter('three', {id: 2}, function (message) {
-    console.log('filter', message);
-  });
-
-  filterSub3.unsubscribe();
+  // var filterSub3 = socket.channels.subscribeFilter('three', {id: 2}, function (message) {
+  //   console.log('filter', message);
+  // });
+  //
+  // filterSub3.unsubscribe();
 
 
   setTimeout(function () {
-    var filterSub2 = socket.channels.subscribeFilter('three', {id: 1}, function (message) {
-      console.log('filter', message);
-    });
-    var filterSub4 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-      console.log('filter', message);
-    });
-
-    filterSub2.unsubscribe();
-    filterSub4.unsubscribe();
+    filterSub.unsubscribe();
+    // var filterSub2 = socket.channels.subscribeFilter('three', {id: 1}, function (message) {
+    //   console.log('filter', message);
+    // });
+    // var filterSub4 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+    //   console.log('filter', message);
+    // });
+    //
+    // filterSub2.unsubscribe();
+    // filterSub4.unsubscribe();
   }, 100);
 
   // filterSub.send('this is a message, from filter');
 
   setTimeout(function () {
     // filterSub.unsubscribe();
-    // var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-    //   console.log('filter', message);
-    // });
+    var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+      console.log('filter', message);
+    });
   }, 5000);
 })();

@@ -52,19 +52,14 @@ var rxSocket = {};
 
     function init() {
       if (!vm.channels.observable) {
-        vm.channels.observable = new Rx.Observable.create(function (observer) {
-          var webSocketSubscription = vm.connection.observable.subscribe(observer);
-          return function () {
-            webSocketSubscription.unsubscribe();
-          };
-        }).share();
+        vm.channels.observable = vm.connection.observable;
         vm.connection.connectionStatus.subscribe(reSubscribe);
       }
       return vm.channels;
     }
 
     function reSubscribe(open) {
-      if (open === 1) {
+      if (open === vm.connection.connectionStatusOptions.openedAfterRetry) {
         var channels = Object.keys(vm.channels.subs);
         var i = channels.length - 1;
         for (; i > -1; i--) {
@@ -269,6 +264,13 @@ var rxSocket = {};
     notifyAction: 'NOTIFY'
   };
 
+  var connectionStatusOptions = {
+    closed: 'Closed',
+    open: 'Open',
+    connectionRetry: 'ConnectionRetry',
+    openedAfterRetry: 'openedAfterRetry'
+  };
+
   function addDefaultOptions(userOptions) {
     return {
       url: userOptions.url,
@@ -303,8 +305,8 @@ var rxSocket = {};
         var socket = new WebSocket(wsUri);
         var inputSubscription;
         socket.onopen = function () {
-          vm.connectionStatus.next(vm.openedOnce && vm.retries ? 1 : true); // 1 indicates to channels to resubscribe
-          // to server
+          vm.connectionStatus.next(
+            vm.openedOnce && vm.retries ? connectionStatusOptions.openedAfterRetry : connectionStatusOptions.open);
           vm.retries = 0;
           vm.openedOnce = true;
           inputSubscription = vm.subject.subscribe(function (data) {
@@ -330,7 +332,7 @@ var rxSocket = {};
           console.error(error);
         };
         socket.onclose = function (event) {
-          vm.connectionStatus.next(false);
+          vm.connectionStatus.next(connectionStatusOptions.closed);
           if (event.code < 1006) {
             observer.complete();
           } else if (vm.options.invalidUrl) {
@@ -346,11 +348,13 @@ var rxSocket = {};
           }
         };
         return function () {
-          if (inputSubscription) {
-            inputSubscription.unsubscribe();
-          }
-          vm.connectionStatus.next(false);
-          socket.close();
+          setTimeout(function () {
+            if (inputSubscription) {
+              inputSubscription.unsubscribe();
+            }
+            vm.connectionStatus.next(connectionStatusOptions.closed);
+            socket.close();
+          });
         };
       }).retryWhen(function (errors) {
         return Rx.Observable
@@ -360,6 +364,7 @@ var rxSocket = {};
                  })
                  .flatMap(function (i) {
                    vm.retries = i;
+                   vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
                    return Rx.Observable.timer(Math.min(i * 8, 60) * 1000);
                  });
       }).share();
@@ -368,6 +373,7 @@ var rxSocket = {};
     vm.connectionStatus = new Rx.BehaviorSubject(false);
     vm.subject = new rxSocket.QueueSubject();
     vm.channels = new rxSocket.channels(this);
+    vm.connectionStatusOptions = connectionStatusOptions;
     vm.observable = connect();
 
     return vm;
