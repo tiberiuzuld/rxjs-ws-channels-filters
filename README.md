@@ -65,7 +65,7 @@ RxJS implementation of websockets with channels and filters
     notifyAction: 'NOTIFY'
   };
 
-  var socket = rxSocket.create(options);
+  var socket = new rxSocket.Create(options);
   console.log(socket);
   socket.channels.subscribe('one', function (message) {
     console.log(message);

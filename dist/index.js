@@ -35,12 +35,12 @@ var rxSocket = {};
 
 (function () {
   'use strict';
-  rxSocket.channels = channels;
+  rxSocket.Channels = Channels;
 
-  function channels(connection) {
+  function Channels(connection) {
 
     var vm = this;
-    this.connection = connection;
+    vm.connection = connection;
 
     vm.channels = {
       observable: undefined,
@@ -77,7 +77,7 @@ var rxSocket = {};
       return subscriber;
     }
 
-    function initChannel(channel) {
+    function initChannel(channel, fromFilter) {
       var channels = init();
       var channelSub = channels.subs[channel];
       if (!channelSub) {
@@ -86,7 +86,7 @@ var rxSocket = {};
           filters: [],
           filtersToSend: []
         };
-        channelSub.observable = createNewChannelObservable(channel, channelSub);
+        channelSub.observable = createNewChannelObservable(channel, channelSub, fromFilter);
         channelSub.serverNotification = createNewChannelServerSubscriptionObservable(channelSub);
       }
       return channelSub;
@@ -98,9 +98,11 @@ var rxSocket = {};
       }).debounceTime(10).subscribe(debounceChannelNotifications);
     }
 
-    function createNewChannelObservable(channel, channelSub) {
+    function createNewChannelObservable(channel, channelSub, fromFilter) {
       return new Rx.Observable.create(function (observer) {
-        joinChannel(channel);
+        if (!fromFilter) {
+          joinChannel(channel);
+        }
         var channelsSubscription = vm.channels.observable.filter(createChannelFilter(channel)).subscribe(observer);
         return function () {
           leaveChannel(channel);
@@ -122,7 +124,7 @@ var rxSocket = {};
     }
 
     function initFilter(channel, filter) {
-      var channelSub = initChannel(channel);
+      var channelSub = initChannel(channel, true);
       var filterSub = findExistingFilter(channelSub.filters, filter);
       if (!filterSub) {
         filterSub = {
@@ -255,7 +257,7 @@ var rxSocket = {};
 
 (function () {
   'use strict';
-  rxSocket.create = create;
+  rxSocket.Create = Create;
   var defaultOptions = {
     channelJoinAction: 'JOIN',
     channelLeaveAction: 'LEAVE',
@@ -288,7 +290,7 @@ var rxSocket = {};
     }
   }
 
-  function create(userOptions) {
+  function Create(userOptions) {
     if (!userOptions.url) {
       console.error('WebSocket url not provided!');
       return;
@@ -302,7 +304,7 @@ var rxSocket = {};
 
     vm.connectionStatus = new Rx.BehaviorSubject(false);
     vm.subject = new rxSocket.QueueSubject();
-    vm.channels = new rxSocket.channels(this);
+    vm.channels = new rxSocket.Channels(vm);
     vm.connectionStatusOptions = connectionStatusOptions;
     vm.observable = connect(vm, userOptions);
 

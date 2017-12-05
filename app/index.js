@@ -59,25 +59,30 @@
   options.channelsMatch = undefined;
   options.filtersMatch = undefined;
 
-  var socket = rxSocket.create(options);
+  var socket = new rxSocket.Create(options);
+  // var socket2 = new rxSocket.Create(options);
 
   socket.connectionStatus.subscribe(function (status) {
     console.log('status: ', status);
   });
 
   // console.log(socket);
-  socket.channels.subscribe('one', function (message) {
-    console.log(message);
-  });
-  // //
+  // socket.channels.subscribe('one', function (message) {
+  //   console.log(message);
+  // });
+
+  // socket2.channels.subscribe('two', function (message) {
+  //   console.log(message);
+  // });
+
   // var filterSub1 = socket.channels.subscribe('one', function (message) {
   //   console.log('secondSubscription to one');
   //   console.log(message);
   // });
   //
-  // var filterSub = socket.channels.subscribe('two', function (message) {
-  //   console.log(message);
-  // });
+  var filterSub = socket.channels.subscribe('two', function (message) {
+    console.log(message);
+  });
 
   var filterSub3 = socket.channels.subscribeFilter('three', {id: 3}, function (message) {
     console.log('filter', message);
@@ -89,28 +94,28 @@
   //
   // filterSub3.unsubscribe();
 
-
-  setTimeout(function () {
-    // filterSub.unsubscribe();
-    // filterSub1.unsubscribe();
-    filterSub3.unsubscribe();
-    var filterSub2 = socket.channels.subscribeFilter('three', {id: 3}, function (message) {
-      console.log('filter', message);
-    });
-    // var filterSub4 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-    //   console.log('filter4', message);
-    // });
-    //
-    // filterSub2.unsubscribe();
-    // filterSub4.unsubscribe();
-  }, 5000);
-
-  // filterSub.send('this is a message, from filter');
-
-  setTimeout(function () {
-    // filterSub.unsubscribe();
-    // var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
-    //   console.log('filter2', message);
-    // });
-  }, 5000);
+  //
+  // setTimeout(function () {
+  //   // filterSub.unsubscribe();
+  //   // filterSub1.unsubscribe();
+  //   filterSub3.unsubscribe();
+  //   var filterSub2 = socket.channels.subscribeFilter('three', {id: 3}, function (message) {
+  //     console.log('filter', message);
+  //   });
+  //   // var filterSub4 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+  //   //   console.log('filter4', message);
+  //   // });
+  //   //
+  //   // filterSub2.unsubscribe();
+  //   // filterSub4.unsubscribe();
+  // }, 5000);
+  //
+  // // filterSub.send('this is a message, from filter');
+  //
+  // setTimeout(function () {
+  //   // filterSub.unsubscribe();
+  //   // var filterSub2 = socket.channels.subscribeFilter('three', {id: 4}, function (message) {
+  //   //   console.log('filter2', message);
+  //   // });
+  // }, 5000);
 })();
