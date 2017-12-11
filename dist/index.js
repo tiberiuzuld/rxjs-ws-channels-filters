@@ -3,33 +3,36 @@ var rxSocket = {};
 
 (function () {
   'use strict';
-  rxSocket.QueueSubject = QueueSubject;
+  rxSocket.QueueSubjectInit = function () {
+    rxSocket.QueueSubject = QueueSubject;
 
-  QueueSubject.prototype = Object.create(Rx.Subject.prototype);
+    QueueSubject.prototype = Object.create(rxSocket.Rx.Subject.prototype);
 
-  function QueueSubject() {
-    Rx.Subject.apply(this, arguments);
-    this._queuedValues = [];
-    return this;
-  }
-
-  QueueSubject.prototype.next = function (value) {
-    if (this.closed || this.observers.length)
-      Rx.Subject.prototype.next.call(this, value);
-    else
-      this._queuedValues.push(value);
-  };
-
-  QueueSubject.prototype._subscribe = function (subscriber) {
-    var vm = this;
-    var ret = Rx.Subject.prototype._subscribe.call(this, subscriber);
-    if (this._queuedValues.length) {
-      this._queuedValues.forEach(function (value) {
-        return Rx.Subject.prototype.next.call(vm, value);
-      });
-      this._queuedValues.splice(0);
+    function QueueSubject() {
+      rxSocket.Rx.Subject.apply(this, arguments);
+      this._queuedValues = [];
+      return this;
     }
-    return ret;
+
+    QueueSubject.prototype.next = function (value) {
+      if (this.closed || this.observers.length) {
+        rxSocket.Rx.Subject.prototype.next.call(this, value);
+      } else {
+        this._queuedValues.push(value);
+      }
+    };
+
+    QueueSubject.prototype._subscribe = function (subscriber) {
+      var vm = this;
+      var ret = rxSocket.Rx.Subject.prototype._subscribe.call(this, subscriber);
+      if (this._queuedValues.length) {
+        this._queuedValues.forEach(function (value) {
+          return rxSocket.Rx.Subject.prototype.next.call(vm, value);
+        });
+        this._queuedValues.splice(0);
+      }
+      return ret;
+    };
   };
 })();
 
@@ -93,13 +96,13 @@ var rxSocket = {};
     }
 
     function createNewChannelServerSubscriptionObservable(channelSub) {
-      return new Rx.Observable.create(function (observer) {
+      return new rxSocket.Rx.Observable.create(function (observer) {
         channelSub.observer = observer;
       }).debounceTime(10).subscribe(debounceChannelNotifications);
     }
 
     function createNewChannelObservable(channel, channelSub, fromFilter) {
-      return new Rx.Observable.create(function (observer) {
+      return new rxSocket.Rx.Observable.create(function (observer) {
         if (!fromFilter) {
           joinChannel(channel);
         }
@@ -157,7 +160,7 @@ var rxSocket = {};
     }
 
     function createNewFilterObservable(channelSub, filter, filterSub) {
-      return new Rx.Observable.create(function (observer) {
+      return new rxSocket.Rx.Observable.create(function (observer) {
         channelSub.observer.next(channelSub.name);
         channelSub.filtersToSend.push({
           action: vm.connection.options.filterJoinAction,
@@ -290,7 +293,13 @@ var rxSocket = {};
     }
   }
 
-  function Create(userOptions) {
+  function Create(userOptions, rxObservable, rxSubject, rxBehaviorSubject) {
+    rxSocket.Rx = {
+      Observable: rxObservable || Rx.Observable,
+      Subject: rxSubject || Rx.Subject,
+      BehaviorSubject: rxBehaviorSubject || Rx.BehaviorSubject
+    };
+    rxSocket.QueueSubjectInit();
     if (!userOptions.url) {
       console.error('WebSocket url not provided!');
       return;
@@ -302,7 +311,7 @@ var rxSocket = {};
     vm.retries = 0;
     vm.openedOnce = false;
 
-    vm.connectionStatus = new Rx.BehaviorSubject(false);
+    vm.connectionStatus = new rxSocket.Rx.BehaviorSubject(false);
     vm.subject = new rxSocket.QueueSubject();
     vm.channels = new rxSocket.Channels(vm);
     vm.connectionStatusOptions = connectionStatusOptions;
@@ -312,18 +321,18 @@ var rxSocket = {};
   }
 
   function connect(vm, userOptions) {
-    return new Rx.Observable.create(socketObservable)
+    return new rxSocket.Rx.Observable.create(socketObservable)
       .retryWhen(function (errors) {
-        return Rx.Observable
-                 .range(0, 100000)
-                 .zip(errors, function (i) {
-                   return i;
-                 })
-                 .flatMap(function (i) {
-                   vm.retries = i;
-                   vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
-                   return Rx.Observable.timer(5 * 1000);
-                 });
+        return rxSocket.Rx.Observable
+                       .range(0, 100000)
+                       .zip(errors, function (i) {
+                         return i;
+                       })
+                       .flatMap(function (i) {
+                         vm.retries = i;
+                         vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
+                         return rxSocket.Rx.Observable.timer(5 * 1000);
+                       });
       }).share().publishReplay().refCount();
 
     function socketObservable(observer) {
