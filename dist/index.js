@@ -113,7 +113,7 @@ var rxSocket = {};
           channelSub.serverNotification.unsubscribe();
           delete vm.channels.subs[channel];
         };
-      }).publishReplay().refCount();
+      }).publishReplay(1000).refCount();
     }
 
     function channelsMatch(source, target) {
@@ -176,7 +176,7 @@ var rxSocket = {};
           });
           filterSubscription.unsubscribe();
         };
-      }).publishReplay().refCount();
+      }).publishReplay(1).refCount();
     }
 
     function getChannelFilters(channel) {
