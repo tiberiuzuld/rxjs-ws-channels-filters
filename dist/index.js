@@ -308,7 +308,7 @@ var rxSocket = {};
     this.options = addDefaultOptions(userOptions);
 
     var vm = this;
-    vm.retries = 0;
+    vm.retries = false;
     vm.openedOnce = false;
 
     vm.connectionStatus = new rxSocket.Rx.BehaviorSubject(false);
@@ -323,16 +323,11 @@ var rxSocket = {};
   function connect(vm, userOptions) {
     return new rxSocket.Rx.Observable.create(socketObservable)
       .retryWhen(function (errors) {
-        return rxSocket.Rx.Observable
-                       .range(0, 100000)
-                       .zip(errors, function (i) {
-                         return i;
-                       })
-                       .flatMap(function (i) {
-                         vm.retries = i;
-                         vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
-                         return rxSocket.Rx.Observable.timer(5 * 1000);
-                       });
+        return errors.flatMap(function () {
+          vm.retries = true;
+          vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
+          return rxSocket.Rx.Observable.timer(5 * 1000);
+        });
       }).share().publishReplay(1000).refCount();
 
     function socketObservable(observer) {
@@ -342,7 +337,7 @@ var rxSocket = {};
       socket.onopen = function () {
         vm.connectionStatus.next(
           vm.openedOnce && vm.retries ? connectionStatusOptions.openedAfterRetry : connectionStatusOptions.open);
-        vm.retries = 0;
+        vm.retries = false;
         vm.openedOnce = true;
         inputSubscription = vm.subject.subscribe(function (data) {
           var message = data;
