@@ -98,7 +98,9 @@ var rxSocket = {};
     function createNewChannelServerSubscriptionObservable(channelSub) {
       return new rxSocket.Rx.Observable.create(function (observer) {
         channelSub.observer = observer;
-      }).debounceTime(10).subscribe(debounceChannelNotifications);
+      }).pipe(
+        rxSocket.Rx.debounceTime(10)
+      ).subscribe(debounceChannelNotifications);
     }
 
     function createNewChannelObservable(channel, channelSub, fromFilter) {
@@ -106,14 +108,19 @@ var rxSocket = {};
         if (!fromFilter) {
           joinChannel(channel);
         }
-        var channelsSubscription = vm.channels.observable.filter(createChannelFilter(channel)).subscribe(observer);
+        var channelsSubscription = vm.channels.observable.pipe(
+          rxSocket.Rx.filter(createChannelFilter(channel))
+        ).subscribe(observer);
         return function () {
           leaveChannel(channel);
           channelsSubscription.unsubscribe();
           channelSub.serverNotification.unsubscribe();
           delete vm.channels.subs[channel];
         };
-      }).publishReplay(1000).refCount();
+      }).pipe(
+        rxSocket.Rx.publishReplay(1000),
+        rxSocket.Rx.refCount()
+      );
     }
 
     function channelsMatch(source, target) {
@@ -166,7 +173,9 @@ var rxSocket = {};
           action: vm.connection.options.filterJoinAction,
           filter: filter
         });
-        var filterSubscription = channelSub.observable.filter(createFilterFunction(filter)).subscribe(observer);
+        var filterSubscription = channelSub.observable.pipe(
+          rxSocket.Rx.filter(createFilterFunction(filter))
+        ).subscribe(observer);
         return function () {
           channelSub.filters.splice(channelSub.filters.indexOf(filterSub), 1);
           channelSub.observer.next(channelSub.name);
@@ -176,7 +185,10 @@ var rxSocket = {};
           });
           filterSubscription.unsubscribe();
         };
-      }).publishReplay(1).refCount();
+      }).pipe(
+        rxSocket.Rx.publishReplay(1),
+        rxSocket.Rx.refCount()
+      );
     }
 
     function getChannelFilters(channel) {
@@ -293,11 +305,20 @@ var rxSocket = {};
     }
   }
 
-  function Create(userOptions, rxObservable, rxSubject, rxBehaviorSubject) {
+  function Create(userOptions, rxObservable, rxSubject, rxBehaviorSubject, rxTimer, rxRetryWhen, rxShare,
+                  rxPublishReplay, rxRefCount, rxDebounceTime, rxFilter, rxFlatMap) {
     rxSocket.Rx = {
-      Observable: rxObservable || Rx.Observable,
-      Subject: rxSubject || Rx.Subject,
-      BehaviorSubject: rxBehaviorSubject || Rx.BehaviorSubject
+      Observable: rxObservable || rxjs.Observable,
+      Subject: rxSubject || rxjs.Subject,
+      BehaviorSubject: rxBehaviorSubject || rxjs.BehaviorSubject,
+      timer: rxTimer || rxjs.timer,
+      retryWhen: rxRetryWhen || rxjs.operators.retryWhen,
+      share: rxShare || rxjs.operators.share,
+      publishReplay: rxPublishReplay || rxjs.operators.publishReplay,
+      refCount: rxRefCount || rxjs.operators.refCount,
+      debounceTime: rxDebounceTime || rxjs.operators.debounceTime,
+      filter: rxFilter || rxjs.operators.filter,
+      flatMap: rxFlatMap || rxjs.operators.flatMap
     };
     rxSocket.QueueSubjectInit();
     if (!userOptions.url) {
@@ -322,13 +343,18 @@ var rxSocket = {};
 
   function connect(vm, userOptions) {
     return new rxSocket.Rx.Observable.create(socketObservable)
-      .retryWhen(function (errors) {
-        return errors.flatMap(function () {
-          vm.retries = true;
-          vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
-          return rxSocket.Rx.Observable.timer(5 * 1000);
-        });
-      }).share().publishReplay(1000).refCount();
+      .pipe(
+        rxSocket.Rx.retryWhen(function (errors) {
+          return errors.pipe(rxSocket.Rx.flatMap(function () {
+            vm.retries = true;
+            vm.connectionStatus.next(connectionStatusOptions.connectionRetry);
+            return rxSocket.Rx.timer(5 * 1000);
+          }));
+        }),
+        rxSocket.Rx.share(),
+        rxSocket.Rx.publishReplay(1000),
+        rxSocket.Rx.refCount()
+      );
 
     function socketObservable(observer) {
       var wsUri = (window.location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + vm.options.url;
